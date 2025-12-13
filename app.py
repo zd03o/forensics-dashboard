@@ -60,12 +60,30 @@ def registry():
 def logs():
     if "user" not in session:
         return redirect(url_for("login"))
+
     if request.method == "POST":
         f = request.files.get("log_file")
         if f:
             content = f.read().decode(errors="ignore")
-            return f"<h3>Log File Uploaded Successfully</h3><pre>{content[:2000]}</pre>"
+            lines = content.splitlines()
+
+            error_count = sum(1 for l in lines if "error" in l.lower())
+            warning_count = sum(1 for l in lines if "warning" in l.lower())
+            info_count = sum(1 for l in lines if "info" in l.lower())
+
+            sample_errors = [l for l in lines if "error" in l.lower()][:5]
+
+            return render_template(
+                "logs.html",
+                total=len(lines),
+                errors=error_count,
+                warnings=warning_count,
+                infos=info_count,
+                samples=sample_errors
+            )
+
     return render_template("logs.html")
+
 
 @app.route("/logout")
 def logout():
