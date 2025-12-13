@@ -2,3 +2,17 @@
 <body><h2 class="center">Log Tools</h2>
 <div class="upload-box"><form method="POST" enctype="multipart/form-data">
 <input type="file" name="log_file"><button type="submit">Analyze</button></form></div></body></html>
+{% if total %}
+<hr>
+<p><b>Total lines:</b> {{ total }}</p>
+<p><b>Errors:</b> {{ errors }}</p>
+<p><b>Warnings:</b> {{ warnings }}</p>
+<p><b>Info:</b> {{ infos }}</p>
+
+<h4>Sample Errors:</h4>
+<ul>
+{% for s in samples %}
+    <li>{{ s }}</li>
+{% endfor %}
+</ul>
+{% endif %}
