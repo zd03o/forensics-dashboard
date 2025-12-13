@@ -31,12 +31,30 @@ def dashboard():
 def registry():
     if "user" not in session:
         return redirect(url_for("login"))
+
+    suspicious = ["run", "startup", "shell", "appinit"]
+
     if request.method == "POST":
         f = request.files.get("registry_file")
         if f:
             content = f.read().decode(errors="ignore")
-            return f"<h3>File Uploaded Successfully</h3><pre>{content[:2000]}</pre>"
+            lines = content.splitlines()
+
+            found = []
+            for l in lines:
+                for s in suspicious:
+                    if s in l.lower():
+                        found.append(l)
+
+            return render_template(
+                "registry.html",
+                total=len(lines),
+                suspicious=len(found),
+                matches=found[:10]
+            )
+
     return render_template("registry.html")
+
 
 @app.route("/logs", methods=["GET", "POST"])
 def logs():
