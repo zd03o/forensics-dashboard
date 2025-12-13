@@ -2,3 +2,15 @@
 <body><h2 class="center">Registry Analysis</h2>
 <div class="upload-box"><form method="POST" enctype="multipart/form-data">
 <input type="file" name="registry_file"><button type="submit">Analyze</button></form></div></body></html>
+{% if total %}
+<hr>
+<p><b>Total Lines:</b> {{ total }}</p>
+<p><b>Suspicious Entries:</b> {{ suspicious }}</p>
+
+<h4>Sample Matches:</h4>
+<ul>
+{% for m in matches %}
+    <li>{{ m }}</li>
+{% endfor %}
+</ul>
+{% endif %}
