@@ -70,28 +70,52 @@ def logs():
     if "user" not in session:
         return redirect(url_for("login"))
 
+    high_risk = [
+        "unauthorized",
+        "access denied",
+        "root",
+        "segmentation fault",
+        "kernel panic"
+    ]
+
+    medium_risk = [
+        "failed",
+        "error",
+        "warning",
+        "login failed",
+        "invalid"
+    ]
+
+    results = []
+
     if request.method == "POST":
         f = request.files.get("log_file")
         if f:
             content = f.read().decode(errors="ignore")
             lines = content.splitlines()
 
-            error_count = sum(1 for l in lines if "error" in l.lower())
-            warning_count = sum(1 for l in lines if "warning" in l.lower())
-            info_count = sum(1 for l in lines if "info" in l.lower())
+            for l in lines:
+                ll = l.lower()
+                if any(k in ll for k in high_risk):
+                    results.append((l, "High"))
+                elif any(k in ll for k in medium_risk):
+                    results.append((l, "Medium"))
 
-            sample_errors = [l for l in lines if "error" in l.lower()][:5]
+            risk_score = (
+                len([r for r in results if r[1] == "High"]) * 2 +
+                len([r for r in results if r[1] == "Medium"])
+            )
 
             return render_template(
                 "logs.html",
                 total=len(lines),
-                errors=error_count,
-                warnings=warning_count,
-                infos=info_count,
-                samples=sample_errors
+                findings=len(results),
+                risk=risk_score,
+                results=results
             )
 
     return render_template("logs.html")
+
 
 
 @app.route("/logout")
