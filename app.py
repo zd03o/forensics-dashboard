@@ -116,6 +116,26 @@ def logs():
 
     return render_template("logs.html")
 
+@app.route("/tools", methods=["GET", "POST"])
+def tools():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    output = None
+
+    if request.method == "POST":
+        tool = request.form.get("tool")
+        f = request.files.get("file")
+
+        if f:
+            content = f.read().decode(errors="ignore")
+
+            if tool == "registry":
+                output = registry_tool(content)
+            elif tool == "logs":
+                output = log_tool(content)
+
+    return render_template("tools.html", output=output)
 
 
 @app.route("/logout")
