@@ -25,4 +25,22 @@ td, th {
   border: 1px solid #ccc;
   padding: 8px;
 }
+.high {
+  background-color: #f8d7da;
+}
+
+.medium {
+  background-color: #fff3cd;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
 
