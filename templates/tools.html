@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Forensics Tools</title>
+</head>
+<body>
+
+<h2>Run Forensic Tool</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    <label>Select Tool:</label>
+    <select name="tool">
+        <option value="registry">Registry Tool</option>
+        <option value="logs">Log Analysis Tool</option>
+    </select>
+    <br><br>
+
+    <input type="file" name="file" required>
+    <br><br>
+
+    <button type="submit">Run Tool</button>
+</form>
+
+{% if output %}
+<hr>
+<h3>Tool Output</h3>
+<pre>{{ output }}</pre>
+{% endif %}
+
+</body>
+</html>
