@@ -137,6 +137,26 @@ def tools():
 
     return render_template("tools.html", output=output)
 
+def registry_tool(content):
+    indicators = ["run", "startup", "appinit", "shell"]
+    results = []
+
+    for line in content.splitlines():
+        if any(i in line.lower() for i in indicators):
+            results.append(line)
+
+    return "\n".join(results[:20])
+
+
+def log_tool(content):
+    indicators = ["error", "failed", "unauthorized", "warning"]
+    results = []
+
+    for line in content.splitlines():
+        if any(i in line.lower() for i in indicators):
+            results.append(line)
+
+    return "\n".join(results[:20])
 
 @app.route("/logout")
 def logout():
