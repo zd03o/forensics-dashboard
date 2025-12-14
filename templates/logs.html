@@ -2,17 +2,24 @@
 <body><h2 class="center">Log Tools</h2>
 <div class="upload-box"><form method="POST" enctype="multipart/form-data">
 <input type="file" name="log_file"><button type="submit">Analyze</button></form></div></body></html>
-{% if total %}
+{% if results %}
 <hr>
-<p><b>Total lines:</b> {{ total }}</p>
-<p><b>Errors:</b> {{ errors }}</p>
-<p><b>Warnings:</b> {{ warnings }}</p>
-<p><b>Info:</b> {{ infos }}</p>
 
-<h4>Sample Errors:</h4>
-<ul>
-{% for s in samples %}
-    <li>{{ s }}</li>
-{% endfor %}
-</ul>
+<p><b>Total Lines:</b> {{ total }}</p>
+<p><b>Findings:</b> {{ findings }}</p>
+<p><b>Risk Score:</b> {{ risk }}</p>
+
+<table>
+  <tr>
+    <th>Log Entry</th>
+    <th>Severity</th>
+  </tr>
+
+  {% for r in results %}
+  <tr class="{{ r[1]|lower }}">
+    <td>{{ r[0] }}</td>
+    <td>{{ r[1] }}</td>
+  </tr>
+  {% endfor %}
+</table>
 {% endif %}
