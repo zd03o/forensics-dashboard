@@ -39,19 +39,35 @@ def registry():
     keywords = ["run", "startup", "shell", "appinit", "userassist"]
 
     if request.method == "POST":
-        f = request.files.get("registry_file")
-        if f:
-            content = f.read().decode(errors="ignore")
-            lines = content.splitlines()
+    f = request.files.get("registry_file")
+    if f:
+        temp = tempfile.NamedTemporaryFile(delete=False)
+        f.save(temp.name)
 
-            matches = [l for l in lines if any(k in l.lower() for k in keywords)]
+        cmd = [
+            "perl",
+            "rip.pl",
+            "-r",
+            temp.name,
+            "-a"
+        ]
 
-            return render_template(
-                "registry.html",
-                total=len(lines),
-                suspicious=len(matches),
-                matches=matches[:20]
-            )
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd="C:/Users/HP/Desktop/RegRipper"
+        )
+
+        output = result.stdout.splitlines()
+
+        os.unlink(temp.name)
+
+        return render_template(
+            "registry.html",
+            output=output[:50]
+        )
+
 
     return render_template("registry.html")
 
