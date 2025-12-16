@@ -1,3 +1,7 @@
+import subprocess
+import tempfile
+import os
+
 from flask import Flask, request, session, redirect, url_for, render_template
 import bcrypt
 
