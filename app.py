@@ -32,44 +32,65 @@ def dashboard():
         return redirect(url_for("login"))
     return render_template("dashboard.html")
 
+
+#-----------------------------------
+
+
 @app.route("/registry", methods=["GET", "POST"])
 def registry():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    high_risk = ["appinit", "shell"]
-    medium_risk = ["run", "startup"]
-
-    results = []
+    output = []
+    error = None
 
     if request.method == "POST":
         f = request.files.get("registry_file")
-        if f:
-            content = f.read().decode(errors="ignore")
-            lines = content.splitlines()
 
-            for l in lines:
-                ll = l.lower()
-                if any(k in ll for k in high_risk):
-                    results.append((l, "High"))
-                elif any(k in ll for k in medium_risk):
-                    results.append((l, "Medium"))
+        #  تأكد إنو في ملف
+        if not f:
+            return render_template("registry.html", error="No file uploaded")
 
-            risk_score = len([r for r in results if r[1] == "High"]) * 2 + \
-                         len([r for r in results if r[1] == "Medium"])
+        #  تحديد حجم الملف (5MB)
+        MAX_FILE_SIZE = 5 * 1024 * 1024
+        f.seek(0, os.SEEK_END)
+        if f.tell() > MAX_FILE_SIZE:
+            return render_template("registry.html", error="File too large (max 5MB)")
+        f.seek(0)
 
-            return render_template(
-                "registry.html",
-                total=len(lines),
-                findings=len(results),
-                risk=risk_score,
-                results=results
+        #  حفظ الملف مؤقتًا
+        upload_path = "temp_registry.hive"
+        f.save(upload_path)
+
+        try:
+            #  تشغيل RegRipper
+            cmd = ["perl", "rip.pl", "-r", upload_path, "-a"]
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=20
             )
 
-    return render_template("registry.html")
+            output = result.stdout.splitlines()
+
+        except Exception as e:
+            error = str(e)
+
+        finally:
+            #  حذف الملف المؤقت
+            if os.path.exists(upload_path):
+                os.remove(upload_path)
+
+    return render_template(
+        "registry.html",
+        output=output,
+        error=error
+    )
 
 
 
+#------------------------------------
 @app.route("/logs", methods=["GET", "POST"])
 def logs():
     if "user" not in session:
