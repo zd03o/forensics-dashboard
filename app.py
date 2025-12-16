@@ -32,10 +32,7 @@ def registry():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    high_risk = ["appinit", "shell"]
-    medium_risk = ["run", "startup"]
-
-    results = []
+    keywords = ["run", "startup", "shell", "appinit", "userassist"]
 
     if request.method == "POST":
         f = request.files.get("registry_file")
@@ -43,25 +40,17 @@ def registry():
             content = f.read().decode(errors="ignore")
             lines = content.splitlines()
 
-            for l in lines:
-                ll = l.lower()
-                if any(k in ll for k in high_risk):
-                    results.append((l, "High"))
-                elif any(k in ll for k in medium_risk):
-                    results.append((l, "Medium"))
-
-            risk_score = len([r for r in results if r[1] == "High"]) * 2 + \
-                         len([r for r in results if r[1] == "Medium"])
+            matches = [l for l in lines if any(k in l.lower() for k in keywords)]
 
             return render_template(
                 "registry.html",
                 total=len(lines),
-                findings=len(results),
-                risk=risk_score,
-                results=results
+                suspicious=len(matches),
+                matches=matches[:20]
             )
 
     return render_template("registry.html")
+
 
 
 
