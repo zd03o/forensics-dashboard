@@ -2,26 +2,14 @@
 <body><h2 class="center">Registry Analysis</h2>
 <div class="upload-box"><form method="POST" enctype="multipart/form-data">
 <input type="file" name="registry_file"><button type="submit">Analyze</button></form></div></body></html>
-{% if results %}
+{% if output %}
 <hr>
-<h3>Analysis Results</h3>
-
-<p><b>Total Entries:</b> {{ total }}</p>
-<p><b>Findings:</b> {{ findings }}</p>
-<p><b>Risk Score:</b> {{ risk }}</p>
-
-<table>
-  <tr>
-    <th>Entry</th>
-    <th>Severity</th>
-  </tr>
-
-  {% for r in results %}
-  <tr class="{{ r[1]|lower }}">
-    <td>{{ r[0] }}</td>
-    <td>{{ r[1] }}</td>
-  </tr>
-  {% endfor %}
-</table>
+<h3>RegRipper Output</h3>
+<pre>
+{% for line in output %}
+{{ line }}
+{% endfor %}
+</pre>
 {% endif %}
+
 
