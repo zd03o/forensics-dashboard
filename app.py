@@ -46,34 +46,14 @@ def registry():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    output = []
-    classified = []
-
     if request.method == "POST":
         f = request.files.get("registry_file")
         if f:
-            hive_path = os.path.join(UPLOAD_DIR, f.filename)
-            f.save(hive_path)
-
-            cmd = ["perl", REGRIPPER_PATH, "-r", hive_path, "-a"]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            lines = result.stdout.splitlines()
-
-            for line in lines:
-                l = line.lower()
-                if any(k in l for k in HIGH):
-                    classified.append((line, "High"))
-                elif any(k in l for k in MED):
-                    classified.append((line, "Medium"))
-
-            return render_template(
-                "registry.html",
-                output=lines,
-                results=classified
-            )
+            content = f.read().decode(errors="ignore")
+            lines = content.splitlines()
+            return render_template("registry.html", output=lines[:50])
 
     return render_template("registry.html")
-
 
 
 @app.route("/logs", methods=["GET", "POST"])
