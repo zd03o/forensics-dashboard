@@ -1,17 +1,3 @@
-import subprocess
-import tempfile
-import os
-
-import request, render_template, redirect, url_for, session
-
-REGRIPPER_PATH = r"C:\Users\HP\Desktop\RegRipper\rip.pl"
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-HIGH = ["appinit", "shell", "userassist", "runonce", "image file execution"]
-MED = ["run", "startup", "services", "tasks"]
-
-
 from flask import Flask, request, session, redirect, url_for, render_template
 import bcrypt
 
@@ -46,14 +32,37 @@ def registry():
     if "user" not in session:
         return redirect(url_for("login"))
 
+    high_risk = ["appinit", "shell"]
+    medium_risk = ["run", "startup"]
+
+    results = []
+
     if request.method == "POST":
         f = request.files.get("registry_file")
         if f:
             content = f.read().decode(errors="ignore")
             lines = content.splitlines()
-            return render_template("registry.html", output=lines[:50])
+
+            for l in lines:
+                ll = l.lower()
+                if any(k in ll for k in high_risk):
+                    results.append((l, "High"))
+                elif any(k in ll for k in medium_risk):
+                    results.append((l, "Medium"))
+
+            risk_score = len([r for r in results if r[1] == "High"]) * 2 + \
+                         len([r for r in results if r[1] == "Medium"])
+
+            return render_template(
+                "registry.html",
+                total=len(lines),
+                findings=len(results),
+                risk=risk_score,
+                results=results
+            )
 
     return render_template("registry.html")
+
 
 
 @app.route("/logs", methods=["GET", "POST"])
@@ -156,3 +165,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run()
+
