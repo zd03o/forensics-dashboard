@@ -1,6 +1,11 @@
 from flask import Flask, request, session, redirect, url_for, render_template
 import bcrypt
 
+import os
+
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+
+
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
