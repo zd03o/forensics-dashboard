@@ -2,6 +2,16 @@ import subprocess
 import tempfile
 import os
 
+import request, render_template, redirect, url_for, session
+
+REGRIPPER_PATH = r"C:\Users\HP\Desktop\RegRipper\rip.pl"
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+HIGH = ["appinit", "shell", "userassist", "runonce", "image file execution"]
+MED = ["run", "startup", "services", "tasks"]
+
+
 from flask import Flask, request, session, redirect, url_for, render_template
 import bcrypt
 
@@ -36,41 +46,33 @@ def registry():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    keywords = ["run", "startup", "shell", "appinit", "userassist"]
+    output = []
+    classified = []
 
     if request.method == "POST":
-    f = request.files.get("registry_file")
-    if f:
-        temp = tempfile.NamedTemporaryFile(delete=False)
-        f.save(temp.name)
+        f = request.files.get("registry_file")
+        if f:
+            hive_path = os.path.join(UPLOAD_DIR, f.filename)
+            f.save(hive_path)
 
-        cmd = [
-            "perl",
-            "rip.pl",
-            "-r",
-            temp.name,
-            "-a"
-        ]
+            cmd = ["perl", REGRIPPER_PATH, "-r", hive_path, "-a"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            lines = result.stdout.splitlines()
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd="C:/Users/HP/Desktop/RegRipper"
-        )
+            for line in lines:
+                l = line.lower()
+                if any(k in l for k in HIGH):
+                    classified.append((line, "High"))
+                elif any(k in l for k in MED):
+                    classified.append((line, "Medium"))
 
-        output = result.stdout.splitlines()
-
-        os.unlink(temp.name)
-
-        return render_template(
-            "registry.html",
-            output=output[:50]
-        )
-
+            return render_template(
+                "registry.html",
+                output=lines,
+                results=classified
+            )
 
     return render_template("registry.html")
-
 
 
 
