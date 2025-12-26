@@ -35,8 +35,12 @@
     {% endfor %}
 </table>
 
+
+<form action="{{ url_for('export_registry') }}" method="get">
+    <button type="submit">Export CSV</button>
+</form>
+
 {% endif %}
 
 </body>
 </html>
-
