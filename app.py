@@ -90,6 +90,26 @@ def registry():
 
     return render_template("registry.html")
 
+@app.route("/registry/export")
+def export_registry():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    results = session.get("last_registry_results", [])
+    if not results:
+        return redirect(url_for("registry"))
+
+    filename = "registry_results.csv"
+
+    with open(filename, "w", newline="") as csvfile:
+        fieldnames = ["key", "name", "data", "risk"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in results:
+            writer.writerow(r)
+
+    return send_file(filename, as_attachment=True)
+
 
 @app.route("/logout")
 def logout():
