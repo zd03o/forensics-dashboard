@@ -45,41 +45,56 @@ def registry():
             f.save(file_path)
 
             try:
-                from Registry import Registry 
-                reg = Registry.Registry(file_path)
-                keys_to_check = [
-                    "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-                    "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
-                    "Software\\Microsoft\\Windows\\CurrentVersion\\Startup",
-                    "System\\CurrentControlSet\\Control\\Session Manager\\AppInit_DLLs"
-                ]
+                from Registry import Registry
+                try:
+                    
+                    reg = Registry.Registry(file_path)
+                    keys_to_check = [
+                        "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                        "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+                        "Software\\Microsoft\\Windows\\CurrentVersion\\Startup",
+                        "System\\CurrentControlSet\\Control\\Session Manager\\AppInit_DLLs"
+                    ]
 
-                for key_path in keys_to_check:
-                    try:
-                        key = reg.open(key_path)
-                        for value in key.values():
+                    for key_path in keys_to_check:
+                        try:
+                            key = reg.open(key_path)
+                            for value in key.values():
+                                results.append({
+                                    "key": key_path.split("\\")[-1],
+                                    "name": value.name(),
+                                    "data": str(value.value()),
+                                    "risk": "High"
+                                })
+                        except Exception:
+                            continue
+
+                    total_keys = sum(1 for _ in reg.recurse_subkeys())
+
+                except Exception:
+                   
+                    with open(file_path, "r", errors="ignore") as txt_file:
+                        lines = txt_file.readlines()
+                        total_keys = len(lines)
+                        for line in lines:
+                            line_lower = line.lower()
+                            risk = "Low"
+                            if any(k in line_lower for k in ["run", "startup", "appinit", "shell"]):
+                                risk = "High"
+                            elif any(k in line_lower for k in ["services", "runonce"]):
+                                risk = "Medium"
                             results.append({
-                                "key": key_path.split("\\")[-1],
-                                "name": value.name(),
-                                "data": str(value.value()),
-                                "risk": "High"
+                                "key": "N/A",
+                                "name": line.strip(),
+                                "data": "",
+                                "risk": risk
                             })
-                    except Exception:
-                        # اذا المفتاح مو موجود تجاهله
-                        continue
 
             except Exception as e:
-                # اي خطا اذا فتحت الملف او قراته
                 return render_template("registry.html", error=f"Error parsing registry: {str(e)}")
 
-            # حفظ النتائج
+           
             session["last_registry_results"] = results
-
-            total_keys = 0
-            try:
-                total_keys = sum(1 for _ in reg.recurse_subkeys())
-            except Exception:
-                total_keys = len(results)  
 
             return render_template(
                 "registry.html",
@@ -89,6 +104,7 @@ def registry():
             )
 
     return render_template("registry.html")
+
 
 @app.route("/registry/export")
 def export_registry():
