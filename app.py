@@ -4,6 +4,9 @@ import bcrypt
 import os
 import subprocess
 
+from Registry import Registry
+import csv
+from flask import send_file
 
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
@@ -44,36 +47,74 @@ def registry():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    HIGH = ["appinit", "shell", "image file execution options", "debugger"]
-    MEDIUM = ["run", "runonce", "startup", "services"]
-    LOW = ["mru", "recent", "typedurls"]
-
     results = []
 
     if request.method == "POST":
         f = request.files.get("registry_file")
         if f:
-            content = f.read().decode(errors="ignore")
-            lines = content.splitlines()
+            # يحذف الملف
+            file_path = "./temp_registry_file"
+            f.save(file_path)
 
-            for line in lines:
-                l = line.lower()
+            # reg anal
+            try:
+                reg = Registry.Registry(file_path)
+                keys_to_check = [
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\Startup",
+                    "System\\CurrentControlSet\\Control\\Session Manager\\AppInit_DLLs"
+                ]
 
-                if any(k in l for k in HIGH):
-                    results.append({"line": line, "risk": "High"})
-                elif any(k in l for k in MEDIUM):
-                    results.append({"line": line, "risk": "Medium"})
-                elif any(k in l for k in LOW):
-                    results.append({"line": line, "risk": "Low"})
+                for key_path in keys_to_check:
+                    try:
+                        key = reg.open(key_path)
+                        for value in key.values():
+                            results.append({
+                                "key": key_path.split("\\")[-1],
+                                "name": value.name(),
+                                "data": str(value.value()),
+                                "risk": "High"
+                            })
+                    except Registry.RegistryKeyNotFoundException:
+                        continue
+
+            except Exception as e:
+                return render_template("registry.html", error=f"Error parsing registry: {str(e)}")
+
+            # savein sess
+            session["last_registry_results"] = results
 
             return render_template(
                 "registry.html",
-                total=len(lines),
+                total=sum(1 for _ in reg.recurse_subkeys()),
                 findings=len(results),
                 results=results
             )
 
     return render_template("registry.html")
+
+
+@app.route("/registry/export")
+def export_registry():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    results = session.get("last_registry_results", [])
+    if not results:
+        return redirect(url_for("registry"))
+
+    filename = "registry_results.csv"
+
+    with open(filename, "w", newline="") as csvfile:
+        fieldnames = ["key", "name", "data", "risk"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for r in results:
+            writer.writerow(r)
+
+    return send_file(filename, as_attachment=True)
+
 
 
 
