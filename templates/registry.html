@@ -8,7 +8,6 @@
 
 <h2 class="center">Registry Analysis</h2>
 
-<!-- رفع ملف Registry -->
 <div class="upload-box">
     <form method="POST" enctype="multipart/form-data">
         <input type="file" name="registry_file" required>
@@ -16,12 +15,12 @@
     </form>
 </div>
 
-<!-- عرض أي خطأ -->
+
 {% if error %}
 <p class="error">{{ error }}</p>
 {% endif %}
 
-<!-- عرض النتائج -->
+
 {% if results %}
 <hr>
 <p><b>Total Keys:</b> {{ total }}</p>
@@ -45,7 +44,7 @@
     {% endfor %}
 </table>
 
-<!-- زر Export CSV -->
+
 <form action="{{ url_for('export_registry') }}" method="get">
     <button type="submit">Export CSV</button>
 </form>
