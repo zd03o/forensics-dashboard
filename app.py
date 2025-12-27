@@ -126,6 +126,52 @@ def export_registry():
 
     return send_file(filename, as_attachment=True)
 
+@app.route("/logs", methods=["GET", "POST"])
+def logs():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    results = []
+    total = 0
+    findings = 0
+    risk = "Low"
+
+    if request.method == "POST":
+        f = request.files.get("log_file")
+        if f:
+            file_path = "./temp_log_file"
+            f.save(file_path)
+
+            with open(file_path, "r", errors="ignore") as log:
+                lines = log.readlines()
+                total = len(lines)
+
+                for line in lines:
+                    line_lower = line.lower()
+                    severity = "Low"
+
+                    if any(k in line_lower for k in ["error", "failed", "unauthorized", "attack"]):
+                        severity = "High"
+                        findings += 1
+                    elif any(k in line_lower for k in ["warning", "denied"]):
+                        severity = "Medium"
+                        findings += 1
+
+                    results.append((line.strip(), severity))
+
+            if findings > 10:
+                risk = "High"
+            elif findings > 3:
+                risk = "Medium"
+
+    return render_template(
+        "log.html",
+        results=results,
+        total=total,
+        findings=findings,
+        risk=risk
+    )
+
 
 @app.route("/logout")
 def logout():
