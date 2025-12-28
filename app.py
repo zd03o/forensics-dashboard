@@ -172,6 +172,48 @@ def logs():
         risk=risk
     )
 
+@app.route("/tools", methods=["GET", "POST"])
+def tools():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    output = None
+    UPLOAD_FOLDER = "uploads"
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    if request.method == "POST":
+        tool = request.form.get("tool")
+        file = request.files.get("file")
+
+        if file:
+            file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+            file.save(file_path)
+
+            try:
+                if tool == "registry":
+                    result = subprocess.run(
+                        ["perl", "tools/regrepper/rip.pl", "-r", file_path],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
+                elif tool == "logs":
+                    result = subprocess.run(
+                        ["python", "tools/log_analysis.py", file_path],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
+                else:
+                    result = None
+
+                output = result.stdout if result else "No output"
+
+            except subprocess.CalledProcessError as e:
+                output = f"Error:\n{e.stderr}"
+
+    return render_template("tools.html", output=output)
+
 
 @app.route("/logout")
 def logout():
